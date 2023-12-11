@@ -1,0 +1,184 @@
+extends includes/layout.pug
+
+block content
+  - const coverVal = page.cover_type === 'img' ? page.cover : theme.avatar.img
+  - const bf_si_sum = strip_html(page.content)
+  - let expert = bf_si_sum.substring(0, 100) 
+  - bf_si_sum.length > 100 ? expert += ' ...' : ''
+
+  #post
+    if top_img === false
+      include includes/header/post-info.pug
+
+    article#article-container.post-content!=page.content
+    include includes/post/post-copyright.pug
+    .tag_share
+      if (theme.post_meta.post.tags)
+        .post-meta__tag-list
+          each item, index in page.tags.data
+            a(href=url_for(item.path)).post-meta__tags #[=item.name]
+      include includes/third-party/share/index.pug
+      script.
+        document.querySelector(".bf-s-img-li").innerHTML="<span class='social-share-icon icon-img' onclick='new QRCode(document.getElementById(\"bf-si-qr\"),{text:urlHash,width:70,height:70,correctLevel:QRCode.CorrectLevel.L,colorLight:\"#f5f5f5\"});'><i class='fa-fw fas fa-share' style='font-family:\"Font Awesome 6 Free\"!important'></i></span>"
+
+    if theme.reward.enable && theme.reward.QR_code
+      !=partial('includes/post/reward', {}, {cache: true})
+
+    link(rel="stylesheet" href="https://source.casecori.top/js/mdui.min.css")
+    #bf-share-img.bf-share-img
+      .bf-si-head.mdui-color-theme(style=`background-image: linear-gradient(rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.7) 100%), url(${url_for(coverVal)})`)
+        p CasecoRI
+        span #{page.title}
+      .bf-si-sum!= expert
+      .bf-si-box
+        span 扫描二维码继续阅读
+        #bf-si-qr.bf-si-qr
+        //-
+          script.
+            ["pjax: complete", "DOMContentLoaded"].forEach(eventItem => {
+              document.addEventListener(eventItem, function() {
+                var qrcode = new QRCode(document.getElementById("bf-si-qr"), {
+                  text: urlHash,
+                  width: 70,
+                  height: 70,
+                  correctLevel: QRCode.CorrectLevel.L,
+                  colorLight: '#f5f5f5'
+                })
+              })
+            })
+      .bf-si-time
+    script(src="https://cdn.casecori.top/npm/mdui@1.0.2/dist/js/mdui.min.js" data-pjax="")
+    script(src="https://source.casecori.top/js/html2canvas.min.js" data-pjax="")
+    script.
+      function ele(selector, callback = null, returnType = 'single') {
+        if (typeof selector === "object") {
+          return selector;
+        } else if (typeof selector !== "string") {
+          return document.createElement("div");
+        }
+
+        let elems = null;
+        let idSelector = false;
+        if (!selector.match(/[ <>:~+^=]/)) {
+          if (selector[0] === '#') {
+            elems = document.getElementById(selector.slice(1));
+            idSelector = true;
+          } else if (selector[0] === '.') {
+            elems = document.getElementsByClassName(selector.slice(1));
+          } else {
+            if (!selector.match(/[ .<>:~+^=#]/)) {
+              elems = document.getElementsByTagName(selector);
+            } else {
+              elems = document.querySelectorAll(selector);
+            }
+          }
+        } else {
+          elems = document.querySelectorAll(selector);
+        }
+
+        if (elems === null || elems.length === 0) {
+          return document.createElement("div");
+        }
+
+        if (callback !== null) {
+          if (!idSelector) {
+            elems = [...elems];
+            Array.prototype.map.call(elems, (e) => { callback(e); return e });
+          } else {
+            callback(elems);
+          }
+        }
+
+        if (returnType == 'single') {
+          if (!idSelector) {
+            return elems[0];
+          } else {
+            return elems;
+          }
+        } else {
+          if (!idSelector) {
+            return elems;
+          } else {
+            return [elems];
+          }
+        }
+
+        }
+      var urlHash = window.location.href;
+      var bf_post_time = ele('.post-meta-date-created').innerHTML.split("-");
+      ele('.bf-si-time').innerHTML = `${bf_post_time[2]}<br><span class="bf-si-time-2">${bf_post_time[0]}/${bf_post_time[1]}</span>`;
+
+      function convertCanvasToImage(canvas) {
+        var image = new Image();
+        var canvasData = canvas.toDataURL("image/png");
+        sessionStorage.setItem('si_' + urlHash, canvasData);
+        image.src = canvasData;
+        document.getElementById('bf-share-img-loaded-container').appendChild(image);
+        ele('#bf-share-img').style.display = 'none';
+        ele('div.bf-share-img-loading', (e) => {
+          e.parentNode.removeChild(e);
+        });
+        setTimeout(() => {
+          window.share_dialog.handleUpdate();
+          ele(".bf-share-img-dialog .mdui-dialog-actions", (e) => {
+            let spanDom = document.createElement('span');
+            spanDom.classList.add('bf-save-info');
+            spanDom.innerHTML = `<i class="mdui-icon material-icons">&#xe80d;</i> 长按/右键保存图片`
+            e.insertBefore(spanDom, e.firstChild);
+          });
+        }, 5);
+      }
+
+      function bf_show_img(e) {
+        e.preventDefault();
+        window.share_dialog = mdui.dialog({
+          content: '<div class="bf-share-img-loaded" id="bf-share-img-loaded-container"></div><div class="mdui-valign bf-share-img-loading"><div class="mdui-center"><div class="mdui-spinner"></div></div></div>',
+          buttons: [
+            {
+              text: "关闭",
+            }
+          ],
+          history: false,
+          cssClass: 'bf-share-img-dialog'
+        });
+        mdui.updateSpinners();
+        ele('#bf-share-img').style.display = 'block';
+
+        if (!sessionStorage.getItem('si_' + urlHash)) {
+          html2canvas(document.getElementById('bf-share-img'), { useCORS: true }).then(convertCanvasToImage);
+        } else {
+          var image = new Image();
+          image.src = sessionStorage.getItem('si_' + urlHash);
+          document.getElementById('bf-share-img-loaded-container').appendChild(image);
+          ele('#bf-share-img').style.display = 'none';
+          ele('div.bf-share-img-loading', (e) => {
+            e.parentNode.removeChild(e);
+          });
+          setTimeout(() => {
+            window.share_dialog.handleUpdate();
+            ele('.bf-share-img-dialog .mdui-dialog-actions', (e) => {
+              let spanDom = document.createElement('span');
+              spanDom.classList.add('bf-save-info');
+              spanDom.innerHTML = `<i class="mdui-icon material-icons">&#xe80d;</i> 长按/右键保存图片`
+              e.insertBefore(spanDom, e.firstChild);
+            });
+          }, 5);
+        }
+      }
+      if (document.getElementsByClassName('bf-s-img-li').length > 0) {
+        document.querySelector('.bf-s-img-li > .icon-img').addEventListener('click', bf_show_img, false);
+        }
+
+    //- ad
+    if theme.ad && theme.ad.post
+      .ads-wrap!=theme.ad.post
+
+    if theme.post_pagination
+      include includes/pagination.pug
+    if theme.related_post && theme.related_post.enable
+      != related_posts(page,site.posts)
+
+    if page.comments !== false && theme.comments && theme.comments.use
+      - var commentsJsLoad = true
+      !=partial('includes/third-party/comments/index', {}, {cache: true})
+
