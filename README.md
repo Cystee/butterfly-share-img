@@ -3,7 +3,7 @@
 
 # Quick Start
 ```bash
-$ git clone https://github.com/Cystee/butterfly-share-img/ [yourFolder]
+$ git clone https://github.com/Cystee/butterfly-share-img.git [yourFolder]
 $ cd [yourFolder]
 $ mv layout.post.pug post.pug
 ```
