@@ -1,6 +1,7 @@
 extends includes/layout.pug
 
 block content
+  //- 初始化变量
   - const coverVal = page.cover_type === 'img' ? page.cover : theme.avatar.img
   - const bf_si_sum = strip_html(page.content)
   - let expert = bf_si_sum.substring(0, 100) 
@@ -18,12 +19,16 @@ block content
           each item, index in page.tags.data
             a(href=url_for(item.path)).post-meta__tags #[=item.name]
       include includes/third-party/share/index.pug
+      //- share.js 插入按钮
       script.
         document.querySelector(".bf-s-img-li").innerHTML="<span class='social-share-icon icon-img' onclick='new QRCode(document.getElementById(\"bf-si-qr\"),{text:urlHash,width:70,height:70,correctLevel:QRCode.CorrectLevel.L,colorLight:\"#f5f5f5\"});'><i class='fa-fw fas fa-share' style='font-family:\"Font Awesome 6 Free\"!important'></i></span>"
 
     if theme.reward.enable && theme.reward.QR_code
       !=partial('includes/post/reward', {}, {cache: true})
 
+    //- 图片源 html
+
+    //- 引用修改后的 mdui.min.css
     link(rel="stylesheet" href="https://source.casecori.top/js/mdui.min.css")
     #bf-share-img.bf-share-img
       .bf-si-head.mdui-color-theme(style=`background-image: linear-gradient(rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.7) 100%), url(${url_for(coverVal)})`)
@@ -33,7 +38,7 @@ block content
       .bf-si-box
         span 扫描二维码继续阅读
         #bf-si-qr.bf-si-qr
-        //-
+        //- 二维码生成，请勿与 onclick 事件混用
           script.
             ["pjax: complete", "DOMContentLoaded"].forEach(eventItem => {
               document.addEventListener(eventItem, function() {
@@ -47,8 +52,10 @@ block content
               })
             })
       .bf-si-time
+    //- CDN 引用
     script(src="https://cdn.casecori.top/npm/mdui@1.0.2/dist/js/mdui.min.js" data-pjax="")
     script(src="https://source.casecori.top/js/html2canvas.min.js" data-pjax="")
+    //- post.js
     script.
       function ele(selector, callback = null, returnType = 'single') {
         if (typeof selector === "object") {
