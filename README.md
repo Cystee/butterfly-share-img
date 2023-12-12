@@ -17,7 +17,8 @@ $ mv [yourFolder]/post.pug [path to themeRoot]/layout -i
 > 你也可以通过引入 `[yourFolder]/dist/post.js` **(Beta)** 到 *文章页* 的方式使用 butterfly-share-img.
 
 ## Demo
-Planning.
+- Static demo planning.
+- [CasecoRI](https://www.casecori.top)
 
 ## npm
 Planning.
